@@ -242,9 +242,9 @@ option(WITH_ELASTICSEARCH
 
 option(WITH_NO_GETENV "Whether the platform supports environment variables" OFF)
 
-option(BUILD_TESTING "Whether to enable tests" ON)
+option(BUILD_TESTING "Whether to enable tests" OFF)
 
-option(WITH_BENCHMARK "Whether to build benchmark program" ON)
+option(WITH_BENCHMARK "Whether to build benchmark program" OFF)
 
 option(BUILD_W3CTRACECONTEXT_TEST "Whether to build w3c trace context" OFF)
 
@@ -292,7 +292,7 @@ option(
   "Whether to build http client/server examples. Requires WITH_EXAMPLES and CURL"
   OFF)
 
-option(WITH_FUNC_TESTS "Whether to build functional tests" ON)
+option(WITH_FUNC_TESTS "Whether to build functional tests" OFF)
 
 option(WITH_ASYNC_EXPORT_PREVIEW "Whether to enable async export" OFF)
 
@@ -313,27 +313,6 @@ if(WITH_EXAMPLES_HTTP AND NOT WITH_EXAMPLES)
 endif()
 
 find_package(Threads)
-
-function(install_windows_deps)
-  # Bootstrap vcpkg from CMake and auto-install deps in case if we are missing
-  # deps on Windows. Respect the target architecture variable.
-  set(VCPKG_TARGET_ARCHITECTURE
-      ${ARCH}
-      PARENT_SCOPE)
-  message(STATUS "Installing build tools and dependencies...")
-  set(ENV{ARCH} ${ARCH})
-  execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tools/setup-buildtools.cmd)
-  set(CMAKE_TOOLCHAIN_FILE
-      ${CMAKE_CURRENT_SOURCE_DIR}/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
-      CACHE FILEPATH "")
-  message(
-    STATUS
-      "Make sure that vcpkg.cmake is set as the CMAKE_TOOLCHAIN_FILE at the START of the cmake build process!
-    Can be command-line arg (cmake -DCMAKE_TOOLCHAIN_FILE=...) or set in your editor of choice."
-  )
-
-endfunction()
 
 function(set_target_version target_name)
   if(OTELCPP_VERSIONED_LIBS)
@@ -401,7 +380,7 @@ if(WITH_OTLP_GRPC
   if((NOT Protobuf_FOUND AND NOT PROTOBUF_FOUND) OR (WITH_OTLP_GRPC
                                                      AND NOT gRPC_FOUND))
     if(WIN32 AND (NOT DEFINED CMAKE_TOOLCHAIN_FILE))
-      install_windows_deps()
+      #install_windows_deps()
     endif()
 
     if(WIN32 AND (NOT DEFINED CMAKE_TOOLCHAIN_FILE))
@@ -623,7 +602,7 @@ if(BUILD_TESTING)
             "Pleaes install GTest with the CMAKE_TOOLCHAIN_FILE at ${CMAKE_TOOLCHAIN_FILE}"
         )
       else()
-        install_windows_deps()
+        #install_windows_deps()
         include(${CMAKE_TOOLCHAIN_FILE})
         find_package(GTest REQUIRED)
       endif()

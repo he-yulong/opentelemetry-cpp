@@ -3,11 +3,6 @@ path = third_party/prometheus-cpp
 url = https://github.com/jupp0r/prometheus-cpp
 branch = master
 
-[submodule "tools/vcpkg"]
-path = tools/vcpkg
-url = https://github.com/Microsoft/vcpkg
-branch = master
-
 [submodule "third_party/ms-gsl"]
 path = third_party/ms-gsl
 url = https://github.com/microsoft/GSL
