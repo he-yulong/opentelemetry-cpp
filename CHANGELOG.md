@@ -13,6 +13,11 @@ Increment the:
 * MINOR version when you add functionality in a backwards compatible manner, and
 * PATCH version when you make backwards compatible bug fixes.
 
+## hyl-main
+
+* [Build] Remove vcpkg dependency
+  [#1](https://github.com/he-yulong/opentelemetry-cpp/issues/1)
+
 ## [Unreleased]
 
 * [SDK] Do not frequently create and destroy http client threads
