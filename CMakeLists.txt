@@ -18,6 +18,10 @@ endif()
 if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW)
 endif()
+# Ensure all targets use the same runtime library
+set(CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:>$<$<CONFIG:RelWithDebInfo>:>$<$<CONFIG:MinSizeRel>:>"
+    CACHE STRING "Runtime Library" FORCE)
 
 # MSVC RTTI flag /GR should not be not added to CMAKE_CXX_FLAGS by default. @see
 # https://cmake.org/cmake/help/latest/policy/CMP0117.html
@@ -26,6 +30,10 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.20.0")
 endif()
 
 project(opentelemetry-cpp)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Mark variables as used so cmake doesn't complain about them
 mark_as_advanced(CMAKE_TOOLCHAIN_FILE)
@@ -102,17 +110,6 @@ else()
 endif()
 message(STATUS "Building for architecture ARCH=${ARCH}")
 
-# Autodetect vcpkg toolchain
-if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  set(CMAKE_TOOLCHAIN_FILE
-      "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-      CACHE STRING "")
-endif()
-
-if(VCPKG_CHAINLOAD_TOOLCHAIN_FILE)
-  include("${VCPKG_CHAINLOAD_TOOLCHAIN_FILE}")
-endif()
-
 option(WITH_ABI_VERSION_1 "ABI version 1" ON)
 option(WITH_ABI_VERSION_2 "EXPERIMENTAL: ABI version 2 preview" OFF)
 
@@ -173,7 +170,7 @@ endif()
 
 message(STATUS "OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION}")
 
-option(WITH_NO_DEPRECATED_CODE "Do not include deprecated code" OFF)
+option(WITH_NO_DEPRECATED_CODE "Do not include deprecated code" ON)
 
 set(WITH_STL
     "OFF"
@@ -182,14 +179,7 @@ set(WITH_STL
 option(WITH_GSL
        "Whether to use Guidelines Support Library for C++ latest features" OFF)
 
-option(WITH_ABSEIL "Whether to use Abseil for C++latest features" OFF)
-
-set(OPENTELEMETRY_INSTALL_default ON)
-if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  set(OPENTELEMETRY_INSTALL_default OFF)
-endif()
-option(OPENTELEMETRY_INSTALL "Whether to install opentelemetry targets"
-       ${OPENTELEMETRY_INSTALL_default})
+option(WITH_ABSEIL "Whether to use Abseil for C++latest features" ON)
 
 include("${PROJECT_SOURCE_DIR}/cmake/tools.cmake")
 
@@ -219,7 +209,7 @@ option(WITH_OTLP_GRPC "Whether to include the OTLP gRPC exporter in the SDK"
        OFF)
 
 option(WITH_OTLP_HTTP "Whether to include the OTLP http exporter in the SDK"
-       OFF)
+       ON)
 
 option(WITH_OTLP_FILE "Whether to include the OTLP file exporter in the SDK"
        OFF)
@@ -303,6 +293,10 @@ option(WITH_METRICS_EXEMPLAR_PREVIEW
 option(OPENTELEMETRY_SKIP_DYNAMIC_LOADING_TESTS
        "Whether to build test libraries that are always linked as shared libs"
        OFF)
+
+add_subdirectory(third_party EXCLUDE_FROM_ALL)
+
+
 
 #
 # Verify options dependencies
@@ -728,44 +722,3 @@ endif()
 
 include(cmake/opentelemetry-build-external-component.cmake)
 include(cmake/patch-imported-config.cmake)
-
-if(OPENTELEMETRY_INSTALL)
-  # Export cmake config and support find_packages(opentelemetry-cpp CONFIG)
-  # Write config file for find_packages(opentelemetry-cpp CONFIG)
-  set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
-  configure_package_config_file(
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/opentelemetry-cpp-config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    PATH_VARS OPENTELEMETRY_ABI_VERSION_NO OPENTELEMETRY_VERSION PROJECT_NAME
-              INCLUDE_INSTALL_DIR CMAKE_INSTALL_LIBDIR
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
-  # Write version file for find_packages(opentelemetry-cpp CONFIG)
-  write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config-version.cmake"
-    VERSION ${OPENTELEMETRY_VERSION}
-    COMPATIBILITY ExactVersion)
-
-  install(
-    FILES
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake"
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config-version.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
-
-  # Export all components
-  export(
-    EXPORT "${PROJECT_NAME}-target"
-    NAMESPACE "${PROJECT_NAME}::"
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-target.cmake"
-  )
-  install(
-    EXPORT "${PROJECT_NAME}-target"
-    NAMESPACE "${PROJECT_NAME}::"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
-
-  if(BUILD_PACKAGE)
-    include(cmake/package.cmake)
-    include(CPack)
-  endif()
-endif()

@@ -32,3 +32,9 @@ branch = master
 path = third_party/opentracing-cpp
 url = https://github.com/opentracing/opentracing-cpp.git
 branch = master
+[submodule "third_party/protobuf/protobuf"]
+	path = third_party/protobuf/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "third_party/curl/curl"]
+	path = third_party/curl/curl
+	url = https://github.com/curl/curl.git
